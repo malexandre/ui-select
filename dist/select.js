@@ -115,6 +115,7 @@ angular.module('ui.select', [])
   ctrl.disabled = undefined; // Initialized inside uiSelect directive link function
   ctrl.resetSearchInput = undefined; // Initialized inside uiSelect directive link function
   ctrl.refreshDelay = undefined; // Initialized inside uiSelectChoices directive link function
+  ctrl.allowNewValues = false;
 
   var _searchInput = $element.querySelectorAll('input.ui-select-search');
   if (_searchInput.length !== 1) {
@@ -188,6 +189,10 @@ angular.module('ui.select', [])
 
   // When the user clicks on an item inside the dropdown
   ctrl.select = function(item) {
+    if(ctrl.allowNewValues && !item && ctrl.search.length > 0) {
+      // create new item on the fly
+      item = ctrl.search;
+    }
     ctrl.selected = item;
     ctrl.close();
     // Using a watch instead of $scope.ngModel.$setViewValue(item)
@@ -280,7 +285,7 @@ angular.module('ui.select', [])
 }])
 
 .directive('uiSelect',
-  ['$document', 'uiSelectConfig', 'uiSelectMinErr', 
+  ['$document', 'uiSelectConfig', 'uiSelectMinErr',
   function($document, uiSelectConfig, uiSelectMinErr) {
 
   return {
@@ -312,6 +317,8 @@ angular.module('ui.select', [])
         $select.resetSearchInput = resetSearchInput !== undefined ? resetSearchInput : true;
       });
 
+      $select.allowNewValues = attrs.allowNewValues ? true : false;
+
       scope.$watch('$select.selected', function(newValue, oldValue) {
         if (ngModel.$viewValue !== newValue) {
           ngModel.$setViewValue(newValue);
@@ -322,6 +329,37 @@ angular.module('ui.select', [])
         $select.selected = ngModel.$viewValue;
       };
 
+      function ensureHighlightVisible() {
+        var container = element.querySelectorAll('.ui-select-choices-content');
+        var rows = container.querySelectorAll('.ui-select-choices-row');
+
+        var highlighted = rows[$select.activeIndex];
+        if(highlighted) {
+          var posY = highlighted.offsetTop + highlighted.clientHeight - container[0].scrollTop;
+          var height = container[0].offsetHeight;
+
+          if (posY > height) {
+            container[0].scrollTop += posY - height;
+          } else if (posY < highlighted.clientHeight) {
+            container[0].scrollTop -= highlighted.clientHeight - posY;
+          }
+        }
+      }
+
+      // Bind to keyboard shortcuts
+      $select.searchInput.on('keydown', function(e) {
+        scope.$apply(function() {
+          var processed = $select.onKeydown(e.which);
+          if (processed) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            ensureHighlightVisible();
+          }
+        });
+      });
+
+      // See Click everywhere but here event http://stackoverflow.com/questions/12931369
       function onDocumentClick(e) {
         var contains = false;
 
@@ -402,7 +440,7 @@ angular.module('ui.select', [])
         $select.parseRepeatAttr(attrs.repeat);
 
         scope.$watch('$select.search', function() {
-          $select.activeIndex = 0;
+          $select.activeIndex = $select.allowNewValues ? -1 : 0;
           $select.refresh(attrs.refresh);
         });
 
@@ -450,15 +488,3 @@ angular.module('ui.select', [])
     return query ? matchItem.replace(new RegExp(escapeRegexp(query), 'gi'), '<span class="ui-select-highlight">$&</span>') : matchItem;
   };
 });
-
-angular.module('ui.select').run(['$templateCache', function ($templateCache) {
-	$templateCache.put('bootstrap/choices.tpl.html', '<ul class="ui-select-choices ui-select-choices-content dropdown-menu" role="menu" aria-labelledby="dLabel" ng-show="$select.items.length> 0"> <li class="ui-select-choices-row" ng-class="{active: $select.activeIndex===$index}"> <a href="javascript:void(0)" ng-transclude></a> </li> </ul> ');
-	$templateCache.put('bootstrap/match.tpl.html', '<button type="button" class="btn btn-default form-control ui-select-match" ng-hide="$select.open" ng-disabled="$select.disabled" ng-click="$select.activate()"> <span ng-hide="$select.selected !==undefined" class="text-muted">{{$select.placeholder}}</span> <span ng-show="$select.selected !==undefined" ng-transclude></span> <span class="caret"></span> </button> ');
-	$templateCache.put('bootstrap/select.tpl.html', '<div class="ui-select-bootstrap dropdown" ng-class="{open: $select.open}"> <div class="ui-select-match"></div> <input type="text" autocomplete="off" tabindex="" class="form-control ui-select-search" placeholder="{{$select.placeholder}}" ng-model="$select.search" ng-show="$select.open"> <div class="ui-select-choices"></div> </div> ');
-	$templateCache.put('select2/choices.tpl.html', '<ul class="ui-select-choices ui-select-choices-content select2-results"> <li class="ui-select-choices-row" ng-class="{\'select2-highlighted\': $select.activeIndex===$index}"> <div class="select2-result-label" ng-transclude></div> </li> </ul> ');
-	$templateCache.put('select2/match.tpl.html', '<a class="select2-choice ui-select-match" ng-class="{\'select2-default\': $select.selected===undefined}" ng-click="$select.activate()"> <span ng-hide="$select.selected !==undefined" class="select2-chosen">{{$select.placeholder}}</span> <span ng-show="$select.selected !==undefined" class="select2-chosen" ng-transclude></span> <span class="select2-arrow"><b></b></span> </a> ');
-	$templateCache.put('select2/select.tpl.html', '<div class="select2 select2-container" ng-class="{\'select2-container-active select2-dropdown-open\': $select.open, \'select2-container-disabled\': $select.disabled}"> <div class="ui-select-match"></div> <div class="select2-drop select2-with-searchbox select2-drop-active" ng-class="{\'select2-display-none\': !$select.open}"> <div class="select2-search"> <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="ui-select-search select2-input" ng-model="$select.search"> </div> <div class="ui-select-choices"></div> </div> </div> ');
-	$templateCache.put('selectize/choices.tpl.html', '<div ng-show="$select.open" class="ui-select-choices selectize-dropdown single"> <div class="ui-select-choices-content selectize-dropdown-content"> <div class="ui-select-choices-row" ng-class="{\'active\': $select.activeIndex===$index}"> <div class="option" data-selectable ng-transclude></div> </div> </div> </div> ');
-	$templateCache.put('selectize/match.tpl.html', '<div ng-hide="$select.open || $select.selected===undefined" class="ui-select-match" ng-transclude></div> ');
-	$templateCache.put('selectize/select.tpl.html', '<div class="selectize-control single"> <div class="selectize-input" ng-class="{\'focus\': $select.open, \'disabled\': $select.disabled}" ng-click="$select.activate()"> <div class="ui-select-match"></div> <input type="text" autocomplete="off" tabindex="" class="ui-select-search" placeholder="{{$select.placeholder}}" ng-model="$select.search" ng-hide="$select.selected && !$select.open" ng-disabled="$select.disabled"> </div> <div class="ui-select-choices"></div> </div> ');
-}]);
