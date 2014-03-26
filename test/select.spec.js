@@ -19,6 +19,17 @@ describe('ui-select tests', function() {
       { name: 'Nicole',    email: 'nicole@email.com',    age: 43 },
       { name: 'Adrian',    email: 'adrian@email.com',    age: 21 }
     ];
+
+    scope.names = [
+      'Adam',
+      'Amalie',
+      'Wladimir',
+      'Samantha',
+      'Estefanía',
+      'Natasha',
+      'Nicole',
+      'Adrian'
+    ];
   }));
 
 
@@ -30,17 +41,33 @@ describe('ui-select tests', function() {
     return el;
   }
 
-  function createUiSelect(attrs) {
+  function generateAttrsHtml(attrs) {
     var attrsHtml = '';
     if (attrs !== undefined) {
       if (attrs.disabled !== undefined) { attrsHtml += ' ng-disabled="' + attrs.disabled + '"'; }
       if (attrs.required !== undefined) { attrsHtml += ' ng-required="' + attrs.required + '"'; }
+      if (attrs.tagging !== undefined) { attrsHtml += ' tagging="' + attrs.tagging + '"'; }
     }
+    return attrsHtml;
+  }
 
+  function createUiSelectCollection(attrs) {
     return compileTemplate(
-      '<ui-select ng-model="selection"' + attrsHtml + '> \
+      '<ui-select ng-model="selection"' + generateAttrsHtml(attrs) + '> \
         <ui-select-match placeholder="Pick one...">{{$select.selected.name}}</ui-select-match> \
         <ui-select-choices repeat="person in people | filter: $select.search"> \
+          <div ng-bind-html="person.name | highlight: $select.search"></div> \
+          <div ng-bind-html="person.email | highlight: $select.search"></div> \
+        </ui-select-choices> \
+      </ui-select>'
+    );
+  }
+
+  function createUiSelect(attrs) {
+    return compileTemplate(
+      '<ui-select ng-model="selection"' + generateAttrsHtml(attrs) + '> \
+        <match placeholder="Pick one...">{{$select.selected.name}}</match> \
+        <choices repeat="person in people | filter: $select.search"> \
           <div ng-bind-html="person.name | highlight: $select.search"></div> \
           <div ng-bind-html="person.email | highlight: $select.search"></div> \
         </ui-select-choices> \
@@ -161,6 +188,15 @@ describe('ui-select tests', function() {
     expect(el3.scope().$select.disabled).toEqual(false);
     clickMatch(el3);
     expect(isDropdownOpened(el3)).toEqual(true);
+  });
+
+  it('should allow tagging if the attribute says so', function() {
+    var el = createUiSelectCollection({tagging: true});
+    clickMatch(el);
+
+    $(el).scope().$select.select("I don't exist");
+
+    expect($(el).scope().$select.selected).toEqual("I don't exist");
   });
 
   // See when an item that evaluates to false (such as "false" or "no") is selected, the placeholder is shown https://github.com/angular-ui/ui-select/pull/32

@@ -115,7 +115,7 @@ angular.module('ui.select', [])
   ctrl.disabled = undefined; // Initialized inside uiSelect directive link function
   ctrl.resetSearchInput = undefined; // Initialized inside uiSelect directive link function
   ctrl.refreshDelay = undefined; // Initialized inside uiSelectChoices directive link function
-  ctrl.allowNewValues = false;
+  ctrl.tagging = false;
 
   var _searchInput = $element.querySelectorAll('input.ui-select-search');
   if (_searchInput.length !== 1) {
@@ -189,7 +189,7 @@ angular.module('ui.select', [])
 
   // When the user clicks on an item inside the dropdown
   ctrl.select = function(item) {
-    if(ctrl.allowNewValues && !item && ctrl.search.length > 0) {
+    if(ctrl.tagging && !item && ctrl.search.length > 0) {
       // create new item on the fly
       item = ctrl.search;
     }
@@ -317,7 +317,7 @@ angular.module('ui.select', [])
         $select.resetSearchInput = resetSearchInput !== undefined ? resetSearchInput : true;
       });
 
-      $select.allowNewValues = attrs.allowNewValues ? true : false;
+      $select.tagging = attrs.tagging ? true : false;
 
       scope.$watch('$select.selected', function(newValue, oldValue) {
         if (ngModel.$viewValue !== newValue) {
@@ -345,19 +345,6 @@ angular.module('ui.select', [])
           }
         }
       }
-
-      // Bind to keyboard shortcuts
-      $select.searchInput.on('keydown', function(e) {
-        scope.$apply(function() {
-          var processed = $select.onKeydown(e.which);
-          if (processed) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            ensureHighlightVisible();
-          }
-        });
-      });
 
       // See Click everywhere but here event http://stackoverflow.com/questions/12931369
       function onDocumentClick(e) {
@@ -440,7 +427,7 @@ angular.module('ui.select', [])
         $select.parseRepeatAttr(attrs.repeat);
 
         scope.$watch('$select.search', function() {
-          $select.activeIndex = $select.allowNewValues ? -1 : 0;
+          $select.activeIndex = $select.tagging ? -1 : 0;
           $select.refresh(attrs.refresh);
         });
 
