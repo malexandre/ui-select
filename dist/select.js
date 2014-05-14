@@ -191,7 +191,7 @@ angular.module('ui.select', [])
   ctrl.select = function(item) {
     if(ctrl.tagging.isActivated && !item && ctrl.search.length > 0) {
       // create new item on the fly
-      item = ctrl.tagging.fct(ctrl.search);
+      item = ctrl.tagging.fct !== undefined ? ctrl.tagging.fct(ctrl.search) : ctrl.search;
     }
     ctrl.selected = item;
     ctrl.close();
@@ -221,7 +221,7 @@ angular.module('ui.select', [])
         if (ctrl.activeIndex < ctrl.items.length - 1) { ctrl.activeIndex++; }
         break;
       case Key.Up:
-        if (ctrl.activeIndex >= 0) { ctrl.activeIndex--; }
+        if (ctrl.activeIndex > 0 || (ctrl.search.length === 0 && ctrl.tagging.isActivated)) { ctrl.activeIndex--; }
         break;
       case Key.Tab:
       case Key.Enter:
@@ -240,6 +240,8 @@ angular.module('ui.select', [])
   _searchInput.on('keydown', function(e) {
     // Keyboard shortcuts are all about the items,
     // does not make sense (and will crash) if ctrl.items is empty
+    // unless we are in tagging mode, in that case we juste need to
+    // have a search term
     if ((ctrl.items.length > 0 && !ctrl.tagging.isActivated) || (ctrl.search.length > 0 && ctrl.tagging.isActivated)) {
       var key = e.which;
 
@@ -320,7 +322,9 @@ angular.module('ui.select', [])
       attrs.$observe('tagging', function() {
         if(attrs.tagging !== undefined)
         {
-          $select.tagging = {isActivated: true, fct: scope.$eval(attrs.tagging)};
+          // $eval() is needed otherwise we get a string instead of a function or a boolean
+          var taggingEval = scope.$eval(attrs.tagging);
+          $select.tagging = {isActivated: true, fct: taggingEval !== true ? taggingEval : undefined};
         }
         else
         {
