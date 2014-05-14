@@ -56,6 +56,10 @@ app.controller('DemoCtrl', function($scope, $http) {
     $scope.country.selected = undefined;
   };
 
+  $scope.tagging = function(name) {
+    return {name: name, email: name + '@gamil.com', age: 'Unknown'};
+  };
+
   $scope.person = {};
   $scope.people = [
     { name: 'Adam',      email: 'adam@email.com',      age: 10 },

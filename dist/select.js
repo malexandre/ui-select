@@ -115,7 +115,7 @@ angular.module('ui.select', [])
   ctrl.disabled = undefined; // Initialized inside uiSelect directive link function
   ctrl.resetSearchInput = undefined; // Initialized inside uiSelect directive link function
   ctrl.refreshDelay = undefined; // Initialized inside uiSelectChoices directive link function
-  ctrl.tagging = false;
+  ctrl.tagging = {isActivated: false, fct: undefined};
 
   var _searchInput = $element.querySelectorAll('input.ui-select-search');
   if (_searchInput.length !== 1) {
@@ -189,9 +189,9 @@ angular.module('ui.select', [])
 
   // When the user clicks on an item inside the dropdown
   ctrl.select = function(item) {
-    if(ctrl.tagging && !item && ctrl.search.length > 0) {
+    if(ctrl.tagging.isActivated && !item && ctrl.search.length > 0) {
       // create new item on the fly
-      item = ctrl.search;
+      item = ctrl.tagging.fct(ctrl.search);
     }
     ctrl.selected = item;
     ctrl.close();
@@ -317,7 +317,16 @@ angular.module('ui.select', [])
         $select.resetSearchInput = resetSearchInput !== undefined ? resetSearchInput : true;
       });
 
-      $select.tagging = attrs.tagging ? true : false;
+      attrs.$observe('tagging', function() {
+        if(attrs.tagging !== undefined)
+        {
+          $select.tagging = {isActivated: true, fct: scope.$eval(attrs.tagging)};
+        }
+        else
+        {
+          $select.tagging = {isActivated: false, fct: undefined};
+        }
+      });
 
       scope.$watch('$select.selected', function(newValue, oldValue) {
         if (ngModel.$viewValue !== newValue) {
@@ -346,7 +355,6 @@ angular.module('ui.select', [])
         }
       }
 
-      // See Click everywhere but here event http://stackoverflow.com/questions/12931369
       function onDocumentClick(e) {
         var contains = false;
 
@@ -427,7 +435,7 @@ angular.module('ui.select', [])
         $select.parseRepeatAttr(attrs.repeat);
 
         scope.$watch('$select.search', function() {
-          $select.activeIndex = $select.tagging ? -1 : 0;
+          $select.activeIndex = $select.tagging.isActivated ? -1 : 0;
           $select.refresh(attrs.refresh);
         });
 

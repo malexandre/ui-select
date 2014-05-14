@@ -99,7 +99,7 @@
         <label class="col-sm-3 control-label">Tagging</label>
         <div class="col-sm-6">
 
-          <ui-select ng-model="person.selected" theme="bootstrap" ng-disabled="false" tagging="true">
+          <ui-select ng-model="person.selected" theme="bootstrap" ng-disabled="false" tagging="tagging">
             <ui-select-match placeholder="Select or search a person in the list...">{{$select.selected.name}}</ui-select-match>
             <ui-select-choices repeat="item in people | filter: $select.search">
               <div ng-bind-html="item.name | highlight: $select.search"></div>
