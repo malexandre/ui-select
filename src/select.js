@@ -221,7 +221,7 @@ angular.module('ui.select', [])
         if (ctrl.activeIndex < ctrl.items.length - 1) { ctrl.activeIndex++; }
         break;
       case Key.Up:
-        if (ctrl.activeIndex > 0) { ctrl.activeIndex--; }
+        if (ctrl.activeIndex >= 0) { ctrl.activeIndex--; }
         break;
       case Key.Tab:
       case Key.Enter:
@@ -240,7 +240,7 @@ angular.module('ui.select', [])
   _searchInput.on('keydown', function(e) {
     // Keyboard shortcuts are all about the items,
     // does not make sense (and will crash) if ctrl.items is empty
-    if (ctrl.items.length > 0) {
+    if ((ctrl.items.length > 0 && !ctrl.tagging.isActivated) || (ctrl.search.length > 0 && ctrl.tagging.isActivated)) {
       var key = e.which;
 
       $scope.$apply(function() {
