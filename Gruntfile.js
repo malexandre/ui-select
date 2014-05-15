@@ -11,7 +11,8 @@ module.exports = function(grunt) {
   grunt.initConfig({
     karma: {
       options: {
-        configFile: 'karma.conf.js'
+        configFile: 'karma.conf.js',
+        colors: grunt.option('color')
       },
       watch: {
         // Does not work under Windows?
